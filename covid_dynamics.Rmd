@@ -22,7 +22,7 @@ data <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv") %>
 # preparations
 ```{r, fig.width=6}
 
-countries <- c("France","Germany","Italy","Netherlands","Switzerland","Sweden","United States", "United Kingdom")
+countries <- c("France","Germany","Italy","Netherlands","Switzerland","Sweden","United States", "United Kingdom", "Brazil")
 
 df <- data %>% 
   filter(country %in% countries)
@@ -42,11 +42,17 @@ df_deaths <- df %>%
 # cases per million
 ```{r, fig.width=10}
 
+
+
 p1 <- df_cases %>%   
   ggplot(aes(days_since_CPM_greater_0.1, CPM_per_day, color=country)) +
     geom_point(alpha=.7) +
     stat_smooth(method = "loess", span=.5, size=.6, color="black") +
-    scale_color_manual(values=RColorBrewer::brewer.pal(9,"Set1")[-6]) +
+    scale_color_manual(values=c(
+                         RColorBrewer::brewer.pal(9,"Set1")[1:5],
+                         ggsci::pal_jco()(2)[2],
+                         RColorBrewer::brewer.pal(9,"Set1")[7:9]
+                        )) +
     facet_wrap(~country) +
     labs(x="days since >0.1 cases per million (CPM)", y="CPM per day") +
     labs(title="Daily cases") +
@@ -56,7 +62,11 @@ p2 <- df_cases %>%
   ggplot(aes(days_since_CPM_greater_0.1, CPM, color=country)) +
     geom_point(alpha=.7) +
     geom_path() +
-    scale_color_manual(values=RColorBrewer::brewer.pal(9,"Set1")[-6]) +
+    scale_color_manual(values=c(
+                         RColorBrewer::brewer.pal(9,"Set1")[1:5],
+                         ggsci::pal_jco()(2)[2],
+                         RColorBrewer::brewer.pal(9,"Set1")[7:9]
+                        )) +
     labs(x="days since >0.1 cases per million (CPM)", y="CPM") +
     labs(title="Total cases") +
     theme(legend.position = "none")
@@ -65,7 +75,11 @@ p3 <- df_deaths %>%
   ggplot(aes(days_since_DPM_greater_0.05, DPM_per_day, color=country)) +
     geom_point(alpha=.7) +
     stat_smooth(method = "loess", span=.5, size=.6, color="black") +
-    scale_color_manual(values=RColorBrewer::brewer.pal(9,"Set1")[-6]) +
+    scale_color_manual(values=c(
+                         RColorBrewer::brewer.pal(9,"Set1")[1:5],
+                         ggsci::pal_jco()(2)[2],
+                         RColorBrewer::brewer.pal(9,"Set1")[7:9]
+                        )) +
     facet_wrap(~country) +
     labs(x="days since >0.05 deaths per million (DPM)", y="DPM per day") +
     labs(title="Daily deaths") +
@@ -75,7 +89,11 @@ p4 <-  df_deaths %>%
   ggplot(aes(days_since_DPM_greater_0.05, DPM, color=country)) +
     geom_point(alpha=.7) +
     geom_path() +
-    scale_color_manual(values=RColorBrewer::brewer.pal(9,"Set1")[-6]) +
+    scale_color_manual(values=c(
+                         RColorBrewer::brewer.pal(9,"Set1")[1:5],
+                         ggsci::pal_jco()(2)[2],
+                         RColorBrewer::brewer.pal(9,"Set1")[7:9]
+                        )) +
     labs(x="days since >0.05 deaths per million (DPM)", y="DPM") +
     ggtitle("Total deaths") +
     labs(title="Total deaths") +
@@ -89,8 +107,6 @@ plot_grid(
 )
 
 ggsave("covid_19_dynamics.png", width=18, height=14)
-
-
 ```
 
 
