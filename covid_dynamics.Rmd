@@ -1,3 +1,8 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 ```{r}
 library("lubridate")
 library("magrittr")
@@ -36,8 +41,8 @@ df_cases <- df %>%
 
 df_deaths <- df %>% 
   group_by(country) %>% 
-  filter(DPM>100) %>% 
-  mutate(days_since_DPM_greater=date-min(date)) %>% 
+  filter(DPM>.05) %>% 
+  mutate(days_since_DPM_greater_0.05=date-min(date)) %>% 
   ungroup()
 
 
@@ -118,7 +123,7 @@ p5 <- df_dpm %>%
   ggplot(aes(days_since_DPM_greater, 1/CFR_per_day, color=country)) +
     geom_point(alpha=.7) +
     stat_smooth(method = "loess", span=.5, size=.6, color="black") +
-    scale_y_log10() +
+    scale_y_log10(breaks=10^(0:10)) +
     scale_color_manual(values=c(
                          RColorBrewer::brewer.pal(9,"Set1")[1:5],
                          ggsci::pal_jco()(2)[2],
@@ -149,5 +154,6 @@ plot_grid(
   plot_grid(p1,p3,p5,p2,p4,p6, ncol=3), ncol=1, rel_heights = c(.1,.02,.1,2)
 )
 
+ggsave("covid_19_dynamics.png", width=25, height=14)
 ggsave("covid_19_dynamics.pdf", width=25, height=14)
 ```
