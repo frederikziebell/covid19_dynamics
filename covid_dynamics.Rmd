@@ -15,7 +15,6 @@ theme_set(theme_cowplot())
 
 # load data
 ```{r}
-
 data <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv") %>% 
   select(
     country=location, date, 
@@ -25,9 +24,11 @@ data <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv") %>
 ```
 
 # preparations
-```{r, fig.width=6}
+```{r}
 
 countries <- c("France","Germany","Italy","Netherlands","Switzerland","Sweden","United States", "United Kingdom", "Brazil")
+
+CFR_case_lag <- 35 # days
 
 df <- data %>% 
   filter(country %in% countries)
@@ -51,8 +52,12 @@ df_dpm <- df %>%
   filter(DPM>100) %>% 
   mutate(days_since_DPM_greater=date-min(date)) %>% 
   mutate(
-    CFR=DPM/CPM,
-    CFR_per_day=DPM_per_day/CPM_per_day
+    CPM_lag=lag(CPM,CFR_case_lag),
+    CPM_per_day_lag=lag(CPM_per_day,CFR_case_lag),
+  ) %>% 
+  mutate(
+    CFR=DPM/CPM_lag,
+    CFR_per_day=DPM_per_day/CPM_per_day_lag
   ) %>% 
   ungroup()
 ```
@@ -64,28 +69,29 @@ p1 <- df_cases %>%
   filter(CPM_per_day>=0) %>% 
   ggplot(aes(days_since_CPM_greater_0.1, CPM_per_day, color=country)) +
     geom_point(alpha=.7) +
-    stat_smooth(method = "loess", span=.5, size=.6, color="black") +
+    stat_smooth(method = "loess", span=.4, size=.6, color="black") +
     scale_color_manual(values=c(
                          RColorBrewer::brewer.pal(9,"Set1")[1:5],
                          ggsci::pal_jco()(2)[2],
                          RColorBrewer::brewer.pal(9,"Set1")[7:9]
                         )) +
-    scale_y_continuous(trans="pseudo_log", breaks=c(0,2,10,50,300)) +
+    scale_x_continuous(expand=c(.01,.01))+
+    scale_y_continuous(trans="pseudo_log", breaks=c(0,3,10,50,300)) +
     facet_wrap(~country) +
-    labs(x="days since >0.1 cases per million (CPM)", y="CPM per day") +
+    labs(x="days since >0.1 cases per million population (CPM)", y="CPM per day [log-scale]") +
     labs(title="Daily cases") +
     theme(legend.position = "none")
 
 p2 <- df_cases %>%   
   ggplot(aes(days_since_CPM_greater_0.1, CPM, color=country)) +
     geom_point(alpha=.7) +
-    geom_path() +
+    scale_x_continuous(expand=c(.01,.01))+
     scale_color_manual(values=c(
                          RColorBrewer::brewer.pal(9,"Set1")[1:5],
                          ggsci::pal_jco()(2)[2],
                          RColorBrewer::brewer.pal(9,"Set1")[7:9]
                         )) +
-    labs(x="days since >0.1 cases per million (CPM)", y="CPM") +
+    labs(x="days since >0.1 cases per million population (CPM)", y="CPM") +
     labs(title="Total cases") +
     theme(legend.position = "none")
 
@@ -93,57 +99,59 @@ p3 <- df_deaths %>%
   filter(DPM_per_day>=0) %>% 
   ggplot(aes(days_since_DPM_greater_0.05, DPM_per_day, color=country)) +
     geom_point(alpha=.7) +
-    stat_smooth(method = "loess", span=.5, size=.6, color="black") +
-    scale_y_continuous(trans="pseudo_log", breaks=c(0,2,10,30)) +
+    scale_x_continuous(expand=c(.01,.01))+
+    stat_smooth(method = "loess", span=.4, size=.6, color="black") +
+    scale_y_continuous(trans="pseudo_log", breaks=c(0,3,10,30)) +
     scale_color_manual(values=c(
                          RColorBrewer::brewer.pal(9,"Set1")[1:5],
                          ggsci::pal_jco()(2)[2],
                          RColorBrewer::brewer.pal(9,"Set1")[7:9]
                         )) +
     facet_wrap(~country) +
-    labs(x="days since >0.05 deaths per million (DPM)", y="DPM per day") +
+    labs(x="days since >0.05 deaths per million population (DPM)", y="DPM per day [log-scale]") +
     labs(title="Daily deaths") +
     theme(legend.position = "none")
 
 p4 <-  df_deaths %>%   
   ggplot(aes(days_since_DPM_greater_0.05, DPM, color=country)) +
     geom_point(alpha=.7) +
-    geom_path() +
+    scale_x_continuous(expand=c(.01,.01))+
     scale_color_manual(values=c(
                          RColorBrewer::brewer.pal(9,"Set1")[1:5],
                          ggsci::pal_jco()(2)[2],
                          RColorBrewer::brewer.pal(9,"Set1")[7:9]
                         )) +
-    labs(x="days since >0.05 deaths per million (DPM)", y="DPM") +
+    labs(x="days since >0.05 deaths per million population (DPM)", y="DPM") +
     ggtitle("Total deaths") +
     theme(legend.position = "none")
 
 p5 <- df_dpm %>%   
-  filter(is.finite(1/CFR_per_day)) %>% 
-  ggplot(aes(days_since_DPM_greater, 1/CFR_per_day, color=country)) +
+  ggplot(aes(days_since_DPM_greater, CFR_per_day, color=country)) +
     geom_point(alpha=.7) +
-    stat_smooth(method = "loess", span=.5, size=.6, color="black") +
-    scale_y_log10(breaks=10^(0:10)) +
+    scale_x_continuous(limits=c(30,max(as.integer(df_dpm$days_since_DPM_greater))), expand=c(.01,.01)) +
+    stat_smooth(method = "loess", span=.4, size=.6, color="black") +
+    scale_y_log10() +
     scale_color_manual(values=c(
                          RColorBrewer::brewer.pal(9,"Set1")[1:5],
                          ggsci::pal_jco()(2)[2],
                          RColorBrewer::brewer.pal(9,"Set1")[7:9]
                         )) +
     facet_wrap(~country) +
-    labs(x="days since >100 deaths per million (DPM)", y="Cases per fatality (1/CFR)") +
+    labs(x="days since >100 deaths per million population (DPM)", y="Fatalities per case [log-scale]") +
     labs(title="Daily case fatality ratio") +
     theme(legend.position = "none")
 
 p6 <-  df_dpm %>%   
-  ggplot(aes(days_since_DPM_greater, 1/CFR, color=country)) +
+  ggplot(aes(days_since_DPM_greater, CFR, color=country)) +
     geom_point(alpha=.7) +
-    geom_path() +
+    scale_x_continuous(limits=c(30,max(as.integer(df_dpm$days_since_DPM_greater))), expand=c(.01,.01)) +
+    scale_y_log10() +
     scale_color_manual(values=c(
                          RColorBrewer::brewer.pal(9,"Set1")[1:5],
                          ggsci::pal_jco()(2)[2],
                          RColorBrewer::brewer.pal(9,"Set1")[7:9]
                         )) +
-    labs(x="days since >100 deaths per million (DPM)", y="Cases per fatality (1/CFR)") +
+    labs(x="days since >100 deaths per million population (DPM)", y="Fatalities per case") +
     ggtitle("Accumulated case fatality ratio") +
     theme(legend.position = "none")
 
