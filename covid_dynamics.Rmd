@@ -1,8 +1,3 @@
----
-output:
-  pdf_document: default
-  html_document: default
----
 ```{r}
 library("lubridate")
 library("magrittr")
@@ -84,7 +79,8 @@ p1 <- df_cases %>%
 
 p2 <- df_cases %>%   
   ggplot(aes(days_since_CPM_greater_0.1, CPM, color=country)) +
-    geom_point(alpha=.7) +
+  #  geom_point(alpha=.7) +
+    geom_path(size=rel(1)) +
     scale_x_continuous(expand=c(.01,.01))+
     scale_color_manual(values=c(
                          RColorBrewer::brewer.pal(9,"Set1")[1:5],
@@ -114,7 +110,8 @@ p3 <- df_deaths %>%
 
 p4 <-  df_deaths %>%   
   ggplot(aes(days_since_DPM_greater_0.05, DPM, color=country)) +
-    geom_point(alpha=.7) +
+  #  geom_point(alpha=.7) +
+    geom_path(size=rel(1)) +
     scale_x_continuous(expand=c(.01,.01))+
     scale_color_manual(values=c(
                          RColorBrewer::brewer.pal(9,"Set1")[1:5],
@@ -143,7 +140,8 @@ p5 <- df_dpm %>%
 
 p6 <-  df_dpm %>%   
   ggplot(aes(days_since_DPM_greater, CFR, color=country)) +
-    geom_point(alpha=.7) +
+  #  geom_point(alpha=.7) +
+    geom_path(size=rel(1)) +
     scale_x_continuous(limits=c(30,max(as.integer(df_dpm$days_since_DPM_greater))), expand=c(.01,.01)) +
     scale_y_log10() +
     scale_color_manual(values=c(
